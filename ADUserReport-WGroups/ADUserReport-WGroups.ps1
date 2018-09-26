@@ -19,9 +19,13 @@ $time = Get-Date
 
 #clean up dates and ADGroups
 $userlist = import-csv C:\BellTech\ADUSerlistUpdate.csv|where-object{$_.objectClass -eq "user"}|Select-Object -Property SamAccountName,givenName,sn,telephoneNumber,mobile,mail,userAccountControl,whenCreated,whenChanged,lastlogontimestamp,dayssincelogon,description,office,City,cn,DN,memberOf,badPasswordTime,pwdLastSet,LockedOut,accountExpires
+$count = 0
 FOREACH($user in $userlist)
 {
-    $ADU = $user.sAMAccountName|get-aduser
+    $count++
+	Write-host ("Adding Details to report, user $user.sAMAccountName, $count of "+$users.count")
+	Write-Progress -Activity ("Gathering Details..."+$user.sAMAccountName) -Status "collected $count of $($users.count)" -PercentComplete ($count/$Users.count*100)
+	$ADU = $user.sAMAccountName|get-aduser
     $user.memberOf = [system.String]::Join(", ", (($ADU|Get-ADPrincipalGroupMembership|select name).name))
     IF($user.whenCreated -ne $NULL){$user.whenCreated = Try{Get-Date([DateTime]::ParseExact(($user.whenCreated).split(".")[0],"yyyyMMddHHmmss", [System.Globalization.CultureInfo]::InvariantCulture))-Format "M/d/yyyy hh:mm tt"}catch{}}
     IF($user.whenChanged -ne $NULL){$user.whenChanged = Try{Get-Date([DateTime]::ParseExact(($user.whenChanged).split(".")[0],"yyyyMMddHHmmss", [System.Globalization.CultureInfo]::InvariantCulture))-Format "M/d/yyyy hh:mm tt"}catch{}}
